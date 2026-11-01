@@ -1,0 +1,10 @@
+{
+  "name": "sbtv25",
+  "version": "25.0.0",
+  "description": "SBTV25",
+  "packageType": "app",
+  "appName": "SBTV25",
+  "appPath": "app/p25.html",
+  "serviceFile": "c25.js",
+  "keys": []
+}
